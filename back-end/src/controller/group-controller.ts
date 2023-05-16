@@ -113,7 +113,7 @@ export class GroupController {
 
       const students = await this.studentRepository
         .createQueryBuilder("student")
-        .select("student.first_name AS first_name, student.last_name AS last_name, student.first_name || ' ' || student.last_name AS full_name")
+        .select("student.id AS id,student.first_name AS first_name, student.last_name AS last_name, student.first_name || ' ' || student.last_name AS full_name")
         .where("id IN (:...studentIds)", { studentIds })
         .getRawMany()
       return this.responseHandler({ data: students, statusCode: 200, userMessage: "" })
