@@ -6,6 +6,7 @@ import * as cors from "cors"
 import { Request, Response } from "express"
 import { Routes } from "./routes"
 import { Student } from "./entity/student.entity"
+import { Roll } from "./entity/roll.entity"
 
 createConnection()
   .then(async (connection) => {
@@ -19,7 +20,9 @@ createConnection()
       ;(app as any)[route.method](route.route, (req: Request, res: Response, next: Function) => {
         const result = new (route.controller as any)()[route.action](req, res, next)
         if (result instanceof Promise) {
-          result.then((result) => (result !== null && result !== undefined ? res.send(result) : undefined))
+          result.then((result) => 
+            result !== null && result !== undefined ? ( result.statusCode === 200 ? res.status(200).send(result) : res.status(result.statusCode || 500).send(result)): undefined
+            )
         } else if (result !== null && result !== undefined) {
           res.json(result)
         }
@@ -141,6 +144,28 @@ createConnection()
         )
       }
     })
+
+    await connection.manager.find(Roll).then(async (rolls) => {
+      console.log("We have " + rolls.length + " rolls")
+      if (rolls.length === 0) {
+        const endDate = new Date();
+        const startDate = new Date(endDate.getTime() - 14 * 24 * 60 * 60 * 1000);
+        let currentDate = startDate;
+        while (currentDate < endDate) {
+          currentDate.setDate(currentDate.getDate() + 1);
+          await connection.manager.save(
+            connection.manager.create(Roll, {
+              name: `Roll_${currentDate}`,
+              completed_at: currentDate
+            })
+          )
+
+        }
+
+      }
+    })
+
+
 
     console.log("Express server has started on port 4001. Open http://localhost:4001/student/get-all to see results")
   })
